@@ -213,7 +213,7 @@ static void workload(int tid)
 		{
 			lvTimer2.tv_sec = lvTimeVal.tv_sec;
 			lvTimer2.tv_nsec = lvTimeVal.tv_nsec;
-			trace_write("RTS_Thread_%d Loop ... %d", tid, counter++);
+			// trace_write("RTS_Thread_%d Loop ... %d", tid, counter++);
 		}
 	}
 }
@@ -240,22 +240,23 @@ static void* Thread(void *inArgs)
 	
 	int tid = args->thread_number; /* tid is just the number of the executing thread; Note that, 
 	pthread_t specified thread id is no the same as this thread id as this depicts only the sequence number of this thread.*/
-	
-	// trace_write("RTS_Thread_%d Policy:%s Priority:%d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
-	// 	args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority);
-
 
 	while (task_count<PERIOD) {
 
 		clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
 		// printf("Thread %d performing task %d\n", tid, task_count);
+
 		trace_write("Thread %d performing task %d\n", tid, task_count, tid, task_count);
+		// trace_write("RTS_Thread_%d Policy:%s Priority:%d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
+		// args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority);
+
 		workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
 		/* In order to change the execution time (busy wait loop) of this thread
 		*  from ~5+/-100us milliseconds to XX milliseconds, you have to change the value of
 		*  DEFAULT_BUSY_WAIT_TIME macro at the top of this file. 
 		*/
 		// printf("Thread %d finish task %d\n", tid, task_count);
+
 		trace_write("Thread %d finish task %d\n", tid, task_count, tid, task_count);
 		task_count++;
 
@@ -412,7 +413,7 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-			trace_write("RTS_Spawned Thread_%d\n", i);
+			// trace_write("RTS_Spawned Thread_%d\n", i);
 		}	
 	}
 	
