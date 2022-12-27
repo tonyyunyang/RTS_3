@@ -248,14 +248,14 @@ static void* Thread(void *inArgs)
 	while (task_count<PERIOD) {
 
 		clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
-		printf("Thread %d performing task %d\n", tid, task_count);
+		// printf("Thread %d performing task %d\n", tid, task_count);
 		trace_write("Thread %d performing task %d\n", tid, task_count, tid, task_count);
 		workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
 		/* In order to change the execution time (busy wait loop) of this thread
 		*  from ~5+/-100us milliseconds to XX milliseconds, you have to change the value of
 		*  DEFAULT_BUSY_WAIT_TIME macro at the top of this file. 
 		*/
-		printf("Thread %d finish task %d\n", tid, task_count);
+		// printf("Thread %d finish task %d\n", tid, task_count);
 		trace_write("Thread %d finish task %d\n", tid, task_count, tid, task_count);
 		task_count++;
 
@@ -322,18 +322,18 @@ int main(int argc, char **argv)
 	// 	periods[i] = 1024;
 	// }
 	priorities[0] = 1;
-	periods[0] = 2000*10; 
+	periods[0] = 2050*10; 
 	// periods[0] = 8000*10;
 
 	priorities[1] = 3;
-	periods[1] = 2000*10; 
+	periods[1] = 2050*10;
 
 	priorities[2] = 2;
-	periods[2] = 2000*10; 
+	periods[2] = 2050*10;
 	// periods[2] = 4000*10; 
 
 	priorities[3] = 4;
-	periods[3] = 2000*10; 
+	periods[3] = 2050*10;
 	// periods[3] = 1000*10; 
 
 	/*<======== Do not change anything below unless you have to change value of affinities[i] below =========>*/
