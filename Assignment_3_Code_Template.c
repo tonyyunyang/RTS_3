@@ -28,6 +28,7 @@
 #define FALSE 0
 
 #define NUM_THREADS 4
+#define PERIOD 5 // define how many times do you want the tasks to be called
 #define HIGHEST_PRIORITY	99
 
 #define handle_error_en(en, msg) \
@@ -38,7 +39,7 @@
 
 #define DEFAULT_BUSY_WAIT_TIME 5000 // 5 Milliseconds
 #define DEFAULT_RR_LOOP_TIME 1000 // 1 Millisecond
-#define MICRO_SECOND_MULTIPLIER 1000000
+#define MICRO_SECOND_MULTIPLIER 1000000 // 1 = 1 microsecond
 
 // Global data and structures
 static int trace_fd = -1;
@@ -221,6 +222,8 @@ static void workload(int tid)
 static void* Thread(void *inArgs)
 {
 	long long thread_response_time = 0;
+	
+	int task_count = 0; // counter for number of tasks executed
 
 	/* <==================== ADD CODE BELOW =======================>*/
 	/* Follow the instruction manual for creating a periodic task here
@@ -243,11 +246,23 @@ static void* Thread(void *inArgs)
 
 	clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
 
-	workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
-	/* In order to change the execution time (busy wait loop) of this thread
-	*  from ~5+/-100us milliseconds to XX milliseconds, you have to change the value of
-	*  DEFAULT_BUSY_WAIT_TIME macro at the top of this file. 
-	*/
+
+	struct timespec next;
+	struct timespec now;
+	clock_gettime(CLOCK_REALTIME, &next);
+	while (1) {
+		workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
+		/* In order to change the execution time (busy wait loop) of this thread
+		*  from ~5+/-100us milliseconds to XX milliseconds, you have to change the value of
+		*  DEFAULT_BUSY_WAIT_TIME macro at the top of this file. 
+		*/
+		printf("Thread %d performing task\n", tid);
+		timespec_add_us(&next, args->thread_period);
+		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next, NULL);
+		task_count++;
+	}
+
+
 	clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
 
 	/* Following sequence of commented instructions should be filled at the end of each periodic iteration*/
@@ -297,6 +312,23 @@ int main(int argc, char **argv)
 	SCHED_OTHER, the priority is always 0 */
 
 	int periods[NUM_THREADS];	// Used in calculation of next period value in a periodic task / thread.
+
+	// for (int i = 0; i < NUM_THREADS; i++)
+	// {
+	// 	priorities[i] = i+1;
+	// 	periods[i] = 1024;
+	// }
+	priorities[0] = 1;
+	periods[0] = 8000*10;
+
+	priorities[1] = 3;
+	periods[1] = 2000*10; 
+
+	priorities[2] = 2;
+	periods[2] = 4000*10; 
+
+	priorities[3] = 4;
+	periods[3] = 1000*10; 
 
 	/*<======== Do not change anything below unless you have to change value of affinities[i] below =========>*/
 	
