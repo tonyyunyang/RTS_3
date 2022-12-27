@@ -241,42 +241,45 @@ static void* Thread(void *inArgs)
 	int tid = args->thread_number; /* tid is just the number of the executing thread; Note that, 
 	pthread_t specified thread id is no the same as this thread id as this depicts only the sequence number of this thread.*/
 	
-	trace_write("RTS_Thread_%d Policy:%s Priority:%d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
-		args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority);
-
-	clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
+	// trace_write("RTS_Thread_%d Policy:%s Priority:%d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
+	// 	args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority);
 
 
-	struct timespec next;
-	struct timespec now;
-	clock_gettime(CLOCK_REALTIME, &next);
-	while (1) {
+	while (task_count<PERIOD) {
+
+		clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
+		printf("Thread %d performing task %d\n", tid, task_count);
+		trace_write("Thread %d performing task %d\n", tid, task_count, tid, task_count);
 		workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
 		/* In order to change the execution time (busy wait loop) of this thread
 		*  from ~5+/-100us milliseconds to XX milliseconds, you have to change the value of
 		*  DEFAULT_BUSY_WAIT_TIME macro at the top of this file. 
 		*/
-		printf("Thread %d performing task\n", tid);
-		timespec_add_us(&next, args->thread_period);
-		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next, NULL);
+		printf("Thread %d finish task %d\n", tid, task_count);
+		trace_write("Thread %d finish task %d\n", tid, task_count, tid, task_count);
 		task_count++;
+
+		timespec_add_us(&results[tid].thread_start_time, args->thread_period);
+		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &results[tid].thread_start_time, NULL);
+		
+		clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
+
+		/* Following sequence of commented instructions should be filled at the end of each periodic iteration*/
+		// results[tid].thread_deadline 		= <Fill with the next calculated deadline>;
+		// results[tid].thread_response_time 	= <Fill with the response_time>;
+
+		/* Do not change the below sequence of instructions.*/
+		results[tid].thread_number 			= args->thread_number;
+		results[tid].thread_policy 			= args->thread_policy; 
+		results[tid].thread_affinity 		= sched_getcpu();
+		results[tid].thread_priority 		= args->thread_priority;
+		results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
+
+		// trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld", args->thread_number, args->thread_response_time, args->thread_deadline);
 	}
 
 
-	clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
-
-	/* Following sequence of commented instructions should be filled at the end of each periodic iteration*/
-	// results[tid].thread_deadline 		= <Fill with the next calculated deadline>;
-	// results[tid].thread_response_time 	= <Fill with the response_time>;
-
-	/* Do not change the below sequence of instructions.*/
-	results[tid].thread_number 			= args->thread_number;
-	results[tid].thread_policy 			= args->thread_policy; 
-	results[tid].thread_affinity 		= sched_getcpu();
-	results[tid].thread_priority 		= args->thread_priority;
-	results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
-
-	trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld", args->thread_number, args->thread_response_time, args->thread_deadline);
+	
 
 	/* <==================== ADD CODE ABOVE =======================>*/
 }
@@ -319,16 +322,19 @@ int main(int argc, char **argv)
 	// 	periods[i] = 1024;
 	// }
 	priorities[0] = 1;
-	periods[0] = 8000*10;
+	periods[0] = 2000*10; 
+	// periods[0] = 8000*10;
 
 	priorities[1] = 3;
 	periods[1] = 2000*10; 
 
 	priorities[2] = 2;
-	periods[2] = 4000*10; 
+	periods[2] = 2000*10; 
+	// periods[2] = 4000*10; 
 
 	priorities[3] = 4;
-	periods[3] = 1000*10; 
+	periods[3] = 2000*10; 
+	// periods[3] = 1000*10; 
 
 	/*<======== Do not change anything below unless you have to change value of affinities[i] below =========>*/
 	
