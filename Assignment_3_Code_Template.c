@@ -248,7 +248,8 @@ static void* Thread(void *inArgs)
 
 	while (task_count<PERIOD) {
 		
-		clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
+		// clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
+
 		// printf("Thread %d performing task %d\n", tid, task_count);
 		// trace_write("Thread %d performing task %d\n", tid, task_count);
 		trace_write("RTS_Thread_%d Executing ... Policy:%s Priority:%d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
@@ -262,7 +263,9 @@ static void* Thread(void *inArgs)
 
 		// trace_write("Thread %d finish task %d\n", tid, task_count);
 		// printf("Thread %d finish task %d\n", tid, task_count);
-		clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
+
+		// clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
+
 		/* Do not change the below sequence of instructions.*/
 		results[tid].thread_number 			= args->thread_number;
 		results[tid].thread_policy 			= args->thread_policy; 
@@ -276,8 +279,9 @@ static void* Thread(void *inArgs)
 		// results[tid].thread_deadline 		= <Fill with the next calculated deadline>;
 		// results[tid].thread_response_time 	= <Fill with the response_time>;
 
-		timespec_add_us(&results[tid].thread_start_time, args->thread_period);
-		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &results[tid].thread_start_time, NULL);
+		timespec_add_us(&args->thread_start_time, args->thread_period);
+		printf("Thread %d has a period of %d, and a release time of %ld\n", tid, args->thread_period, args->thread_start_time.tv_nsec);
+		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->thread_start_time, NULL);
 		task_count++;
 		
 	}
@@ -320,31 +324,35 @@ int main(int argc, char **argv)
 
 	int periods[NUM_THREADS];	// Used in calculation of next period value in a periodic task / thread.
 
-	// for (int i = 0; i < NUM_THREADS; i++)
-	// {
-	// 	priorities[i] = i+1;
-	// 	periods[i] = 1024;
-	// }
 	priorities[0] = 3;
-	periods[0] = 675000; //150000*4.5 
+	periods[0] = 675500; //150000*4.5 
 
 	priorities[1] = 3;
-	periods[1] = 825000; //150000*5.5
+	periods[1] = 825500; //150000*5.5
 	priorities[2] = 2;
-	periods[2] = 975000; //150000*6.5 
+	periods[2] = 975500; //150000*6.5 
 
 	priorities[3] = 2;
-	periods[3] = 1125000; //150000*7.5 
+	periods[3] = 1125500; //150000*7.5 
 
 	priorities[4] = 1;
-	periods[4] = 1275000; //150000*8.5 
+	periods[4] = 1275500; //150000*8.5 
 
 	priorities[5] = 1;
-	periods[5] = 1425000; //150000*9.5 
+	periods[5] = 1425500; //150000*9.5 
 
 	//total utilization = 0.9141301079
 
+	int num_tasks;
+	struct timespec init_start_time[NUM_THREADS];
+	struct timespec init;
 
+	clock_gettime(CLOCK_REALTIME, &init);
+
+	for (num_tasks = 0; num_tasks < NUM_THREADS; num_tasks++) {
+		init_start_time[num_tasks] = init;
+		printf("init = %ld\n", init.tv_sec);
+	}
 
 	/*<======== Do not change anything below unless you have to change value of affinities[i] below =========>*/
 	
@@ -415,6 +423,7 @@ int main(int argc, char **argv)
 		lvargs[i].thread_affinity = affinities[i];
 		lvargs[i].thread_period = periods[i];
 		lvargs[i].thread_priority = priorities[i];
+		lvargs[i].thread_start_time = init_start_time[i]; // added by myself
 
 		if(pthread_create(&thread_id[i], &attributes[i], Thread, (void*)&lvargs[i]) != 0)
 		{
