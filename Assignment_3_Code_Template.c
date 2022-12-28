@@ -28,7 +28,6 @@
 #define FALSE 0
 
 #define NUM_THREADS 4
-#define PERIOD 5 // define how many times do you want the tasks to be called
 #define HIGHEST_PRIORITY	99
 
 #define handle_error_en(en, msg) \
@@ -37,9 +36,9 @@
 #define POL_TO_STR(x) \
        x==SCHED_FIFO?"FIFO":x==SCHED_RR?"RR":x==SCHED_OTHER?"OTHER":"INVALID"
 
-#define DEFAULT_BUSY_WAIT_TIME 5000 // 5 Milliseconds
-#define DEFAULT_RR_LOOP_TIME 1000 // 1 Millisecond
-#define MICRO_SECOND_MULTIPLIER 1000000 // 1 = 1 microsecond
+#define DEFAULT_BUSY_WAIT_TIME 150000 // 5 Milliseconds
+#define DEFAULT_RR_LOOP_TIME 10000 // 1 Millisecond
+#define MICRO_SECOND_MULTIPLIER 1000000
 
 // Global data and structures
 static int trace_fd = -1;
@@ -184,7 +183,7 @@ static void workload(int tid)
 	}
 	struct timespec lvTimer = lvTimeVal, lvTimer2 = lvTimeVal;
 	unsigned int counter = 1;
-
+	
 
 	while(1)
 	{
@@ -201,7 +200,7 @@ static void workload(int tid)
 			) {break;}
 
 		if  (
-				(inputpolicy == SCHED_RR) && 
+				((inputpolicy == SCHED_RR) || (inputpolicy == SCHED_OTHER)) && 
 				(
 					(
 						(lvTimeVal.tv_sec*MICRO_SECOND_MULTIPLIER+lvTimeVal.tv_nsec/1000) - 
@@ -213,7 +212,14 @@ static void workload(int tid)
 		{
 			lvTimer2.tv_sec = lvTimeVal.tv_sec;
 			lvTimer2.tv_nsec = lvTimeVal.tv_nsec;
-			trace_write("RTS_Thread_%d Loop ... %d", tid, counter++);
+			if(inputpolicy == SCHED_OTHER){
+				trace_write("RTS__OTHER_Thread_%d Loop ... %d", tid, counter++);
+			}
+			
+			if(inputpolicy == SCHED_RR){
+				trace_write("RTS_RR_Thread_%d Loop ... %d", tid, counter++);
+			}
+			
 		}
 	}
 }
@@ -222,8 +228,6 @@ static void workload(int tid)
 static void* Thread(void *inArgs)
 {
 	long long thread_response_time = 0;
-	
-	int task_count = 0; // counter for number of tasks executed
 
 	/* <==================== ADD CODE BELOW =======================>*/
 	/* Follow the instruction manual for creating a periodic task here
@@ -245,24 +249,28 @@ static void* Thread(void *inArgs)
 		args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority);
 
 	clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
-
-
+	
 	struct timespec next;
-	struct timespec now;
 	clock_gettime(CLOCK_REALTIME, &next);
-	while (1) {
+	int count = 0;
+	// struct timespec A;
+	// sched_rr_get_interval(0, &A);
+	// trace_write("length is %ld", A.tv_nsec);
+	while (count < 3){
+		trace_write("RTS_Thread_%d Loop ... %d", tid, count);
+		timespec_add_us(&next, args->thread_period);
+	
 		workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
 		/* In order to change the execution time (busy wait loop) of this thread
 		*  from ~5+/-100us milliseconds to XX milliseconds, you have to change the value of
 		*  DEFAULT_BUSY_WAIT_TIME macro at the top of this file. 
 		*/
-		printf("Thread %d performing task\n", tid);
-		timespec_add_us(&next, args->thread_period);
+		trace_write("RTS_Thread_%d SLEEP START ... %d", tid, count);
 		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next, NULL);
-		task_count++;
+		trace_write("RTS_Thread_%d SLEEP END ... %d", tid, count);
+		count++;
+		//trace_write("RTS_Thread_%d Loop END... %d", tid, count);
 	}
-
-
 	clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
 
 	/* Following sequence of commented instructions should be filled at the end of each periodic iteration*/
@@ -312,24 +320,17 @@ int main(int argc, char **argv)
 	SCHED_OTHER, the priority is always 0 */
 
 	int periods[NUM_THREADS];	// Used in calculation of next period value in a periodic task / thread.
-
-	// for (int i = 0; i < NUM_THREADS; i++)
-	// {
-	// 	priorities[i] = i+1;
-	// 	periods[i] = 1024;
-	// }
+	for(int i = 0; i < 4; i++){
+		periods[i] = 600000;
+	}
 	priorities[0] = 1;
-	periods[0] = 8000*10;
-
-	priorities[1] = 3;
-	periods[1] = 2000*10; 
-
-	priorities[2] = 2;
-	periods[2] = 4000*10; 
-
+	priorities[1] = 2;
+	priorities[2] = 4;
 	priorities[3] = 4;
-	periods[3] = 1000*10; 
-
+	// priorities[0] = 0;
+	// priorities[1] = 0;
+	// priorities[2] = 0;
+	// priorities[3] = 0;
 	/*<======== Do not change anything below unless you have to change value of affinities[i] below =========>*/
 	
 	thread_func_prototype thread_functions[NUM_THREADS] = {Thread};
