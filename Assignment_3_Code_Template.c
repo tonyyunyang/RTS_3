@@ -27,7 +27,7 @@
 #define TRUE 1
 #define FALSE 0
 
-#define NUM_THREADS 4
+#define NUM_THREADS 6
 #define PERIOD 5 // define how many times do you want the tasks to be called
 #define HIGHEST_PRIORITY	99
 
@@ -37,7 +37,7 @@
 #define POL_TO_STR(x) \
        x==SCHED_FIFO?"FIFO":x==SCHED_RR?"RR":x==SCHED_OTHER?"OTHER":"INVALID"
 
-#define DEFAULT_BUSY_WAIT_TIME 5000 // 5 Milliseconds
+#define DEFAULT_BUSY_WAIT_TIME 150000 // default: 5 Milliseconds
 #define DEFAULT_RR_LOOP_TIME 1000 // 1 Millisecond
 #define MICRO_SECOND_MULTIPLIER 1000000 // 1 = 1 microsecond
 
@@ -176,8 +176,7 @@ static void trace_write(const char *fmt, ...)
 /*<======== Do not change anything in this function =========>*/
 static void workload(int tid)
 {
-
-
+	
 	struct timespec lvTimeVal;
 	if(clock_gettime(CLOCK_THREAD_CPUTIME_ID, &lvTimeVal) != 0){
 		fprintf(stderr, "%s\n", "Error Fetching Clock Start Time."); return;
@@ -213,7 +212,7 @@ static void workload(int tid)
 		{
 			lvTimer2.tv_sec = lvTimeVal.tv_sec;
 			lvTimer2.tv_nsec = lvTimeVal.tv_nsec;
-			// trace_write("RTS_Thread_%d Loop ... %d", tid, counter++);
+			trace_write("RTS_Thread_%d Loop ... %d", tid, counter++);
 		}
 	}
 }
@@ -241,34 +240,29 @@ static void* Thread(void *inArgs)
 	int tid = args->thread_number; /* tid is just the number of the executing thread; Note that, 
 	pthread_t specified thread id is no the same as this thread id as this depicts only the sequence number of this thread.*/
 
-	while (task_count<PERIOD) {
+	// Below for RR scheduling
+	struct timespec tp;
+	int ret;
+	ret = sched_rr_get_interval(0, &tp);
+	printf("Thread %d, Round-robin time interval: %ld.%09ld seconds\n",tid, tp.tv_sec, tp.tv_nsec);
 
+	while (task_count<PERIOD) {
+		
 		clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
 		// printf("Thread %d performing task %d\n", tid, task_count);
-
-		trace_write("Thread %d performing task %d\n", tid, task_count, tid, task_count);
-		// trace_write("RTS_Thread_%d Policy:%s Priority:%d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
-		// args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority);
+		// trace_write("Thread %d performing task %d\n", tid, task_count);
+		trace_write("RTS_Thread_%d Executing ... Policy:%s Priority:%d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
+		args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority);
 
 		workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
 		/* In order to change the execution time (busy wait loop) of this thread
 		*  from ~5+/-100us milliseconds to XX milliseconds, you have to change the value of
 		*  DEFAULT_BUSY_WAIT_TIME macro at the top of this file. 
 		*/
+
+		// trace_write("Thread %d finish task %d\n", tid, task_count);
 		// printf("Thread %d finish task %d\n", tid, task_count);
-
-		trace_write("Thread %d finish task %d\n", tid, task_count, tid, task_count);
-		task_count++;
-
-		timespec_add_us(&results[tid].thread_start_time, args->thread_period);
-		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &results[tid].thread_start_time, NULL);
-		
 		clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
-
-		/* Following sequence of commented instructions should be filled at the end of each periodic iteration*/
-		// results[tid].thread_deadline 		= <Fill with the next calculated deadline>;
-		// results[tid].thread_response_time 	= <Fill with the response_time>;
-
 		/* Do not change the below sequence of instructions.*/
 		results[tid].thread_number 			= args->thread_number;
 		results[tid].thread_policy 			= args->thread_policy; 
@@ -276,7 +270,16 @@ static void* Thread(void *inArgs)
 		results[tid].thread_priority 		= args->thread_priority;
 		results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
 
-		// trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld", args->thread_number, args->thread_response_time, args->thread_deadline);
+		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld", args->thread_number, args->thread_response_time, args->thread_deadline);
+
+		/* Following sequence of commented instructions should be filled at the end of each periodic iteration*/
+		// results[tid].thread_deadline 		= <Fill with the next calculated deadline>;
+		// results[tid].thread_response_time 	= <Fill with the response_time>;
+
+		timespec_add_us(&results[tid].thread_start_time, args->thread_period);
+		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &results[tid].thread_start_time, NULL);
+		task_count++;
+		
 	}
 
 
@@ -322,20 +325,26 @@ int main(int argc, char **argv)
 	// 	priorities[i] = i+1;
 	// 	periods[i] = 1024;
 	// }
-	priorities[0] = 1;
-	periods[0] = 2050*10; 
-	// periods[0] = 8000*10;
+	priorities[0] = 3;
+	periods[0] = 675000; //150000*4.5 
 
 	priorities[1] = 3;
-	periods[1] = 2050*10;
-
+	periods[1] = 825000; //150000*5.5
 	priorities[2] = 2;
-	periods[2] = 2050*10;
-	// periods[2] = 4000*10; 
+	periods[2] = 975000; //150000*6.5 
 
-	priorities[3] = 4;
-	periods[3] = 2050*10;
-	// periods[3] = 1000*10; 
+	priorities[3] = 2;
+	periods[3] = 1125000; //150000*7.5 
+
+	priorities[4] = 1;
+	periods[4] = 1275000; //150000*8.5 
+
+	priorities[5] = 1;
+	periods[5] = 1425000; //150000*9.5 
+
+	//total utilization = 0.9141301079
+
+
 
 	/*<======== Do not change anything below unless you have to change value of affinities[i] below =========>*/
 	
