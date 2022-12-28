@@ -267,11 +267,11 @@ static void* Thread(void *inArgs)
 		// clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
 
 		/* Do not change the below sequence of instructions.*/
-		results[tid].thread_number 			= args->thread_number;
-		results[tid].thread_policy 			= args->thread_policy; 
-		results[tid].thread_affinity 		= sched_getcpu();
-		results[tid].thread_priority 		= args->thread_priority;
-		results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
+		// results[tid].thread_number 			= args->thread_number;
+		// results[tid].thread_policy 			= args->thread_policy; 
+		// results[tid].thread_affinity 		= sched_getcpu();
+		// results[tid].thread_priority 		= args->thread_priority;
+		// results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
 
 		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld", args->thread_number, args->thread_response_time, args->thread_deadline);
 
@@ -285,6 +285,7 @@ static void* Thread(void *inArgs)
 		task_count++;
 		
 	}
+
 
 
 	
@@ -351,7 +352,7 @@ int main(int argc, char **argv)
 
 	for (num_tasks = 0; num_tasks < NUM_THREADS; num_tasks++) {
 		init_start_time[num_tasks] = init;
-		printf("init = %ld\n", init.tv_sec);
+		printf("init = %ld\n", init.tv_nsec);
 	}
 
 	/*<======== Do not change anything below unless you have to change value of affinities[i] below =========>*/
@@ -423,7 +424,7 @@ int main(int argc, char **argv)
 		lvargs[i].thread_affinity = affinities[i];
 		lvargs[i].thread_period = periods[i];
 		lvargs[i].thread_priority = priorities[i];
-		lvargs[i].thread_start_time = init_start_time[i]; // added by myself
+		lvargs[i].thread_start_time = init_start_time[i]; // nothing changed, only this line added
 
 		if(pthread_create(&thread_id[i], &attributes[i], Thread, (void*)&lvargs[i]) != 0)
 		{
