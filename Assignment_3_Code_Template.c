@@ -268,7 +268,7 @@ static void* Thread(void *inArgs)
 
 		clock_gettime(CLOCK_REALTIME, &args->thread_end_time);
 
-		timespec_add_us(&args->thread_start_time, args->thread_period + 3200);
+		timespec_add_us(&args->thread_start_time, args->thread_period + 3000);
 		args->thread_deadline = (args->thread_start_time.tv_sec * 1000000000 + args->thread_start_time.tv_nsec);
 
 		/* Following sequence of commented instructions should be filled at the end of each periodic iteration*/
@@ -288,16 +288,14 @@ static void* Thread(void *inArgs)
 
 		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld Miss:%d ", args->thread_number, args->thread_response_time, args->thread_deadline, miss_flag);
 
+		miss_flag = 0;
+
 		// timespec_add_us(&args->thread_start_time, args->thread_period + 3000);
-		// printf("Thread %d has a period of %d ns, and a release time of %ld ns\n", tid, args->thread_period*1000, (args->thread_start_time.tv_sec*1000000000+args->thread_start_time.tv_nsec));
+		printf("Thread %d has a period of %d ns, and a release time of %ld ns\n", tid, args->thread_period*1000, (args->thread_start_time.tv_sec*1000000000+args->thread_start_time.tv_nsec));
 		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->thread_start_time, NULL);
 		task_count++;
 		
 	}
-
-
-
-	
 
 	/* <==================== ADD CODE ABOVE =======================>*/
 }
@@ -362,7 +360,7 @@ int main(int argc, char **argv)
 
 	for (num_tasks = 0; num_tasks < NUM_THREADS; num_tasks++) {
 		init_start_time[num_tasks] = init;
-		printf("init = %ld\n", init.tv_nsec);
+		printf("init = %ld\n", init.tv_sec*1000000000 + init.tv_nsec);
 	}
 
 	/*<======== Do not change anything below unless you have to change value of affinities[i] below =========>*/
