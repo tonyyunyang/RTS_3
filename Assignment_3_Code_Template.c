@@ -28,7 +28,7 @@
 #define FALSE 0
 
 #define NUM_THREADS 6
-#define PERIOD 5 // define how many times do you want the tasks to be called
+#define PERIOD 4 // define how many times do you want the tasks to be called
 #define HIGHEST_PRIORITY	99
 
 #define handle_error_en(en, msg) \
@@ -246,6 +246,8 @@ static void* Thread(void *inArgs)
 	ret = sched_rr_get_interval(0, &tp);
 	printf("Thread %d, Round-robin time interval: %ld.%09ld seconds\n",tid, tp.tv_sec, tp.tv_nsec);
 
+	int miss_flag = 0;
+
 	while (task_count<PERIOD) {
 		
 		// clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
@@ -264,22 +266,29 @@ static void* Thread(void *inArgs)
 		// trace_write("Thread %d finish task %d\n", tid, task_count);
 		// printf("Thread %d finish task %d\n", tid, task_count);
 
-		// clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
+		clock_gettime(CLOCK_REALTIME, &args->thread_end_time);
 
-		/* Do not change the below sequence of instructions.*/
-		// results[tid].thread_number 			= args->thread_number;
-		// results[tid].thread_policy 			= args->thread_policy; 
-		// results[tid].thread_affinity 		= sched_getcpu();
-		// results[tid].thread_priority 		= args->thread_priority;
-		// results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
-
-		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld", args->thread_number, args->thread_response_time, args->thread_deadline);
+		timespec_add_us(&args->thread_start_time, args->thread_period + 3200);
+		args->thread_deadline = (args->thread_start_time.tv_sec * 1000000000 + args->thread_start_time.tv_nsec);
 
 		/* Following sequence of commented instructions should be filled at the end of each periodic iteration*/
-		// results[tid].thread_deadline 		= <Fill with the next calculated deadline>;
-		// results[tid].thread_response_time 	= <Fill with the response_time>;
+		results[tid].thread_deadline 		= args->thread_deadline;
+		results[tid].thread_response_time 	= 0;
 
-		timespec_add_us(&args->thread_start_time, args->thread_period + 3000);
+		/* Do not change the below sequence of instructions.*/
+		results[tid].thread_number 			= args->thread_number;
+		results[tid].thread_policy 			= args->thread_policy; 
+		results[tid].thread_affinity 		= sched_getcpu();
+		results[tid].thread_priority 		= args->thread_priority;
+		results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
+
+		if (timespec_cmp(&args->thread_end_time, &args->thread_start_time) > 0) {
+			miss_flag = 1;
+		}
+
+		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld Miss:%d ", args->thread_number, args->thread_response_time, args->thread_deadline, miss_flag);
+
+		// timespec_add_us(&args->thread_start_time, args->thread_period + 3000);
 		// printf("Thread %d has a period of %d ns, and a release time of %ld ns\n", tid, args->thread_period*1000, (args->thread_start_time.tv_sec*1000000000+args->thread_start_time.tv_nsec));
 		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->thread_start_time, NULL);
 		task_count++;
