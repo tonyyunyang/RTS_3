@@ -279,8 +279,8 @@ static void* Thread(void *inArgs)
 		// results[tid].thread_deadline 		= <Fill with the next calculated deadline>;
 		// results[tid].thread_response_time 	= <Fill with the response_time>;
 
-		timespec_add_us(&args->thread_start_time, args->thread_period);
-		printf("Thread %d has a period of %d, and a release time of %ld\n", tid, args->thread_period, args->thread_start_time.tv_nsec);
+		timespec_add_us(&args->thread_start_time, args->thread_period + 200);
+		// printf("Thread %d has a period of %d ns, and a release time of %ld ns\n", tid, args->thread_period*1000, (args->thread_start_time.tv_sec*1000000000+args->thread_start_time.tv_nsec));
 		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->thread_start_time, NULL);
 		task_count++;
 		
@@ -326,21 +326,22 @@ int main(int argc, char **argv)
 	int periods[NUM_THREADS];	// Used in calculation of next period value in a periodic task / thread.
 
 	priorities[0] = 3;
-	periods[0] = 675500; //150000*4.5 
+	periods[0] = 675000; //150000*4.5 
 
 	priorities[1] = 3;
-	periods[1] = 825500; //150000*5.5
+	periods[1] = 825000; //150000*5.5
+
 	priorities[2] = 2;
-	periods[2] = 975500; //150000*6.5 
+	periods[2] = 975000; //150000*6.5 
 
 	priorities[3] = 2;
-	periods[3] = 1125500; //150000*7.5 
+	periods[3] = 1125000; //150000*7.5 
 
 	priorities[4] = 1;
-	periods[4] = 1275500; //150000*8.5 
+	periods[4] = 1275000; //150000*8.5 
 
 	priorities[5] = 1;
-	periods[5] = 1425500; //150000*9.5 
+	periods[5] = 1425000; //150000*9.5 
 
 	//total utilization = 0.9141301079
 
