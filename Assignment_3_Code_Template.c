@@ -27,8 +27,8 @@
 #define TRUE 1
 #define FALSE 0
 
-#define NUM_THREADS 6
-#define PERIOD 5 // define how many times do you want the tasks to be called
+#define NUM_THREADS 5
+#define PERIOD 4 // define how many times do you want the tasks to be called
 #define HIGHEST_PRIORITY	99
 
 #define handle_error_en(en, msg) \
@@ -38,7 +38,7 @@
        x==SCHED_FIFO?"FIFO":x==SCHED_RR?"RR":x==SCHED_OTHER?"OTHER":"INVALID"
 
 #define DEFAULT_BUSY_WAIT_TIME 150000 // default: 5 Milliseconds
-#define DEFAULT_RR_LOOP_TIME 1000 // 1 Millisecond
+#define DEFAULT_RR_LOOP_TIME 75000 // 1 Millisecond
 #define MICRO_SECOND_MULTIPLIER 1000000 // 1 = 1 microsecond
 
 // Global data and structures
@@ -184,7 +184,7 @@ static void workload(int tid)
 	struct timespec lvTimer = lvTimeVal, lvTimer2 = lvTimeVal;
 	unsigned int counter = 1;
 
-
+	//trace_write("RTS_Thread_%d START", tid);
 	while(1)
 	{
 		if(clock_gettime(CLOCK_THREAD_CPUTIME_ID, &lvTimeVal) != 0){
@@ -212,9 +212,10 @@ static void workload(int tid)
 		{
 			lvTimer2.tv_sec = lvTimeVal.tv_sec;
 			lvTimer2.tv_nsec = lvTimeVal.tv_nsec;
-			trace_write("RTS_Thread_%d Loop ... %d", tid, counter++);
+			//trace_write("RTS_Thread_%d Loop ... %d", tid, counter++);
 		}
 	}
+	//trace_write("RTS_Thread_%d END", tid);
 }
 
 /*<======== This is where you have to work =========>*/
@@ -245,22 +246,29 @@ static void* Thread(void *inArgs)
 	int ret;
 	ret = sched_rr_get_interval(0, &tp);
 	printf("Thread %d, Round-robin time interval: %ld.%09ld seconds\n",tid, tp.tv_sec, tp.tv_nsec);
-
+	
+	struct timespec start;
+	struct timespec end;
 	while (task_count<PERIOD) {
 		
 		// clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
-
+		timespec_add_us(&args->thread_start_time, args->thread_period + 3000);
 		// printf("Thread %d performing task %d\n", tid, task_count);
 		// trace_write("Thread %d performing task %d\n", tid, task_count);
 		trace_write("RTS_Thread_%d Executing ... Policy:%s Priority:%d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
 		args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority);
-
+		clock_gettime(CLOCK_REALTIME, &start);
 		workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
+		clock_gettime(CLOCK_REALTIME, &end);
 		/* In order to change the execution time (busy wait loop) of this thread
 		*  from ~5+/-100us milliseconds to XX milliseconds, you have to change the value of
 		*  DEFAULT_BUSY_WAIT_TIME macro at the top of this file. 
 		*/
-
+		if(timespec_cmp(&end, &args->thread_start_time) > 0){
+			//trace_write("thread %d misses deadline", args->thread_number);
+			break;
+		}
+		//trace_write("time diff is %ld", clock_diff(start, end));
 		// trace_write("Thread %d finish task %d\n", tid, task_count);
 		// printf("Thread %d finish task %d\n", tid, task_count);
 
@@ -279,11 +287,12 @@ static void* Thread(void *inArgs)
 		// results[tid].thread_deadline 		= <Fill with the next calculated deadline>;
 		// results[tid].thread_response_time 	= <Fill with the response_time>;
 
-		timespec_add_us(&args->thread_start_time, args->thread_period);
+		
 		printf("Thread %d has a period of %d, and a release time of %ld\n", tid, args->thread_period, args->thread_start_time.tv_nsec);
 		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->thread_start_time, NULL);
+		//trace_write("thread%d, done", tid);
 		task_count++;
-		
+
 	}
 
 
@@ -326,21 +335,21 @@ int main(int argc, char **argv)
 	int periods[NUM_THREADS];	// Used in calculation of next period value in a periodic task / thread.
 
 	priorities[0] = 3;
-	periods[0] = 675500; //150000*4.5 
+	periods[0] = 675000; //150000*4.5 
 
 	priorities[1] = 3;
-	periods[1] = 825500; //150000*5.5
+	periods[1] = 825000; //150000*5.5
 	priorities[2] = 2;
-	periods[2] = 975500; //150000*6.5 
+	periods[2] = 975000; //150000*6.5 
 
 	priorities[3] = 2;
-	periods[3] = 1125500; //150000*7.5 
+	periods[3] = 1125000; //150000*7.5 
 
 	priorities[4] = 1;
-	periods[4] = 1275500; //150000*8.5 
+	periods[4] = 1275000; //150000*8.5 
 
-	priorities[5] = 1;
-	periods[5] = 1425500; //150000*9.5 
+	// priorities[5] = 1;
+	// periods[5] = 1425100; //150000*9.5 
 
 	//total utilization = 0.9141301079
 
