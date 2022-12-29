@@ -279,7 +279,7 @@ static void* Thread(void *inArgs)
 		// results[tid].thread_deadline 		= <Fill with the next calculated deadline>;
 		// results[tid].thread_response_time 	= <Fill with the response_time>;
 
-		timespec_add_us(&args->thread_start_time, args->thread_period + 200);
+		timespec_add_us(&args->thread_start_time, args->thread_period + 3000);
 		// printf("Thread %d has a period of %d ns, and a release time of %ld ns\n", tid, args->thread_period*1000, (args->thread_start_time.tv_sec*1000000000+args->thread_start_time.tv_nsec));
 		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->thread_start_time, NULL);
 		task_count++;
@@ -433,7 +433,7 @@ int main(int argc, char **argv)
 		}
 		else
 		{
-			// trace_write("RTS_Spawned Thread_%d\n", i);
+			trace_write("RTS_Spawned Thread_%d\n", i);
 		}	
 	}
 	
