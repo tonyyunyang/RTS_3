@@ -227,7 +227,7 @@ static void* Thread(void *inArgs)
 	long long thread_response_time = 0;
 	int tasks_count = 0;
 	int miss_flag;
-	struct timespec sleep_time;
+	long long miss_deadline_time = 0;
 
 	/* <==================== ADD CODE BELOW =======================>*/
 	/* Follow the instruction manual for creating a periodic task here
@@ -244,8 +244,6 @@ static void* Thread(void *inArgs)
 	
 	int tid = args->thread_number; /* tid is just the number of the executing thread; Note that, 
 	pthread_t specified thread id is no the same as this thread id as this depicts only the sequence number of this thread.*/
-
-	// struct timespec now;
 	
 	while (tasks_count < PERIOD) {
 		miss_flag = 0;
@@ -275,11 +273,13 @@ static void* Thread(void *inArgs)
 
 		timespec_add_us(&args->wake_time, (args->thread_period));
 
-		if (timespec_cmp(&results[tid].thread_end_time, &args->wake_time) > 0) {
+		miss_deadline_time = timespec_cmp(&results[tid].thread_end_time, &args->wake_time);
+
+		if (miss_deadline_time > 0) {
 			miss_flag = 1;
 		}
 
-		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld Miss: %d", tid, results[tid].thread_response_time, results[tid].thread_deadline, miss_flag);
+		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld Miss: %d Miss time: %lld\n", tid, results[tid].thread_response_time, results[tid].thread_deadline, miss_flag, miss_deadline_time);
 
 		tasks_count++;
 	}
