@@ -361,7 +361,7 @@ int main(int argc, char **argv)
 
 	struct timespec wakeup_time;
   	clock_gettime(CLOCK_REALTIME, &wakeup_time);
-	timespec_add_us(&wakeup_time, 100000);
+	timespec_add_us(&wakeup_time, 10000);
 
 	/*<======== Do not change anything below unless you have to change value of affinities[i] below =========>*/
 	
