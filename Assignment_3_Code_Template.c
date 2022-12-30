@@ -37,8 +37,8 @@
 #define POL_TO_STR(x) \
        x==SCHED_FIFO?"FIFO":x==SCHED_RR?"RR":x==SCHED_OTHER?"OTHER":"INVALID"
 
-// #define DEFAULT_BUSY_WAIT_TIME 5000 // 5 Milliseconds
-#define DEFAULT_BUSY_WAIT_TIME 150000 // default: 5 Milliseconds
+#define DEFAULT_BUSY_WAIT_TIME 5000 // 5 Milliseconds
+// #define DEFAULT_BUSY_WAIT_TIME 150000 // default: 5 Milliseconds
 #define DEFAULT_RR_LOOP_TIME 1000 // 1 Millisecond
 #define MICRO_SECOND_MULTIPLIER 1000000
 
@@ -273,8 +273,8 @@ static void* Thread(void *inArgs)
 		results[tid].thread_priority 		= args->thread_priority;
 		results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
 
-		timespec_add_us(&args->wake_time, args->thread_period);
-		
+		timespec_add_us(&args->wake_time, (args->thread_period));
+
 		if (timespec_cmp(&results[tid].thread_end_time, &args->wake_time) > 0) {
 			miss_flag = 1;
 		}
@@ -319,25 +319,45 @@ int main(int argc, char **argv)
 
 	int periods[NUM_THREADS];	// Used in calculation of next period value in a periodic task / thread.
 
+	// priorities[0] = 3;
+	// periods[0] = 675000; //150000*4.5 
+
+	// priorities[1] = 3;
+	// periods[1] = 825000; //150000*5.5
+
+	// priorities[2] = 2;
+	// periods[2] = 975000; //150000*6.5 
+
+	// priorities[3] = 2;
+	// periods[3] = 1125000; //150000*7.5 
+
+	// priorities[4] = 1;
+	// periods[4] = 1275000; //150000*8.5 
+
+	// priorities[5] = 1;
+	// periods[5] = 1425000; //150000*9.5 
+
+	// //total utilization = 0.9141301079
+
 	priorities[0] = 3;
-	periods[0] = 675000; //150000*4.5 
+	periods[0] = 22500; //150000*4.5 
 
 	priorities[1] = 3;
-	periods[1] = 825000; //150000*5.5
+	periods[1] = 27500; //150000*5.5
 
 	priorities[2] = 2;
-	periods[2] = 975000; //150000*6.5 
+	periods[2] = 32500; //150000*6.5 
 
 	priorities[3] = 2;
-	periods[3] = 1125000; //150000*7.5 
+	periods[3] = 37500; //150000*7.5 
 
 	priorities[4] = 1;
-	periods[4] = 1275000; //150000*8.5 
+	periods[4] = 42500; //150000*8.5 
 
 	priorities[5] = 1;
-	periods[5] = 1425000; //150000*9.5 
+	periods[5] = 47500; //150000*9.5 
 
-	//total utilization = 0.9141301079
+	//total utilization = 0.867159
 
 	struct timespec wakeup_time;
   	clock_gettime(CLOCK_REALTIME, &wakeup_time);
