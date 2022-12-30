@@ -28,7 +28,7 @@
 #define FALSE 0
 
 #define NUM_THREADS 6
-#define PERIOD 4 // define how many times do you want the tasks to be called
+#define PERIOD 5 // define how many times do you want the tasks to be called
 #define HIGHEST_PRIORITY	99
 
 #define handle_error_en(en, msg) \
@@ -37,13 +37,15 @@
 #define POL_TO_STR(x) \
        x==SCHED_FIFO?"FIFO":x==SCHED_RR?"RR":x==SCHED_OTHER?"OTHER":"INVALID"
 
+// #define DEFAULT_BUSY_WAIT_TIME 5000 // 5 Milliseconds
 #define DEFAULT_BUSY_WAIT_TIME 150000 // default: 5 Milliseconds
 #define DEFAULT_RR_LOOP_TIME 1000 // 1 Millisecond
-#define MICRO_SECOND_MULTIPLIER 1000000 // 1 = 1 microsecond
+#define MICRO_SECOND_MULTIPLIER 1000000
 
 // Global data and structures
 static int trace_fd = -1;
 static int inputpolicy = 0;
+
 
 struct thread_args {
 	unsigned int thread_period;
@@ -57,6 +59,8 @@ struct thread_args {
 	double thread_exectime;
 	long long thread_deadline;
 	long long thread_response_time;
+
+	struct timespec wake_time;
 };
 
 static struct thread_args results[NUM_THREADS];
@@ -176,7 +180,7 @@ static void trace_write(const char *fmt, ...)
 /*<======== Do not change anything in this function =========>*/
 static void workload(int tid)
 {
-	
+
 	struct timespec lvTimeVal;
 	if(clock_gettime(CLOCK_THREAD_CPUTIME_ID, &lvTimeVal) != 0){
 		fprintf(stderr, "%s\n", "Error Fetching Clock Start Time."); return;
@@ -221,8 +225,9 @@ static void workload(int tid)
 static void* Thread(void *inArgs)
 {
 	long long thread_response_time = 0;
-	
-	int task_count = 0; // counter for number of tasks executed
+	int tasks_count = 0;
+	int miss_flag;
+	struct timespec sleep_time;
 
 	/* <==================== ADD CODE BELOW =======================>*/
 	/* Follow the instruction manual for creating a periodic task here
@@ -240,40 +245,26 @@ static void* Thread(void *inArgs)
 	int tid = args->thread_number; /* tid is just the number of the executing thread; Note that, 
 	pthread_t specified thread id is no the same as this thread id as this depicts only the sequence number of this thread.*/
 
-	// Below for RR scheduling
-	struct timespec tp;
-	int ret;
-	ret = sched_rr_get_interval(0, &tp);
-	printf("Thread %d, Round-robin time interval: %ld.%09ld seconds\n",tid, tp.tv_sec, tp.tv_nsec);
+	// struct timespec now;
+	
+	while (tasks_count < PERIOD) {
+		miss_flag = 0;
+		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->wake_time, NULL);
 
-	int miss_flag = 0;
+		trace_write("RTS_Thread_%d Policy:%s Priority:%d Period: %d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
+		args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority, args->thread_period*1000);
 
-	while (task_count<PERIOD) {
-		
-		// clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
-
-		// printf("Thread %d performing task %d\n", tid, task_count);
-		// trace_write("Thread %d performing task %d\n", tid, task_count);
-		trace_write("RTS_Thread_%d Executing ... Policy:%s Priority:%d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
-		args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority);
-
+		clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
 		workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
 		/* In order to change the execution time (busy wait loop) of this thread
 		*  from ~5+/-100us milliseconds to XX milliseconds, you have to change the value of
 		*  DEFAULT_BUSY_WAIT_TIME macro at the top of this file. 
 		*/
-
-		// trace_write("Thread %d finish task %d\n", tid, task_count);
-		// printf("Thread %d finish task %d\n", tid, task_count);
-
-		clock_gettime(CLOCK_REALTIME, &args->thread_end_time);
-
-		timespec_add_us(&args->thread_start_time, args->thread_period + 3000);
-		args->thread_deadline = (args->thread_start_time.tv_sec * 1000000000 + args->thread_start_time.tv_nsec);
+		clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
 
 		/* Following sequence of commented instructions should be filled at the end of each periodic iteration*/
-		results[tid].thread_deadline 		= args->thread_deadline;
-		results[tid].thread_response_time 	= 0;
+		results[tid].thread_deadline 		= results[tid].thread_start_time.tv_sec * 1000000000 + results[tid].thread_start_time.tv_nsec + args->thread_period * 1000;
+		results[tid].thread_response_time 	= clock_diff(results[tid].thread_start_time, results[tid].thread_end_time);
 
 		/* Do not change the below sequence of instructions.*/
 		results[tid].thread_number 			= args->thread_number;
@@ -282,19 +273,15 @@ static void* Thread(void *inArgs)
 		results[tid].thread_priority 		= args->thread_priority;
 		results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
 
-		if (timespec_cmp(&args->thread_end_time, &args->thread_start_time) > 0) {
+		timespec_add_us(&args->wake_time, args->thread_period);
+		
+		if (timespec_cmp(&results[tid].thread_end_time, &args->wake_time) > 0) {
 			miss_flag = 1;
 		}
 
-		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld Miss:%d ", args->thread_number, args->thread_response_time, args->thread_deadline, miss_flag);
+		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld Miss: %d", tid, results[tid].thread_response_time, results[tid].thread_deadline, miss_flag);
 
-		miss_flag = 0;
-
-		// timespec_add_us(&args->thread_start_time, args->thread_period + 3000);
-		printf("Thread %d has a period of %d ns, and a release time of %ld ns\n", tid, args->thread_period*1000, (args->thread_start_time.tv_sec*1000000000+args->thread_start_time.tv_nsec));
-		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->thread_start_time, NULL);
-		task_count++;
-		
+		tasks_count++;
 	}
 
 	/* <==================== ADD CODE ABOVE =======================>*/
@@ -352,16 +339,9 @@ int main(int argc, char **argv)
 
 	//total utilization = 0.9141301079
 
-	int num_tasks;
-	struct timespec init_start_time[NUM_THREADS];
-	struct timespec init;
-
-	clock_gettime(CLOCK_REALTIME, &init);
-
-	for (num_tasks = 0; num_tasks < NUM_THREADS; num_tasks++) {
-		init_start_time[num_tasks] = init;
-		printf("init = %ld\n", init.tv_sec*1000000000 + init.tv_nsec);
-	}
+	struct timespec wakeup_time;
+  	clock_gettime(CLOCK_REALTIME, &wakeup_time);
+	timespec_add_us(&wakeup_time, 100000);
 
 	/*<======== Do not change anything below unless you have to change value of affinities[i] below =========>*/
 	
@@ -432,7 +412,7 @@ int main(int argc, char **argv)
 		lvargs[i].thread_affinity = affinities[i];
 		lvargs[i].thread_period = periods[i];
 		lvargs[i].thread_priority = priorities[i];
-		lvargs[i].thread_start_time = init_start_time[i]; // nothing changed, only this line added
+		lvargs[i].wake_time = wakeup_time;
 
 		if(pthread_create(&thread_id[i], &attributes[i], Thread, (void*)&lvargs[i]) != 0)
 		{
