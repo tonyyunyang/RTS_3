@@ -319,6 +319,8 @@ int main(int argc, char **argv)
 
 	int periods[NUM_THREADS];	// Used in calculation of next period value in a periodic task / thread.
 
+	// below for RR
+
 	// priorities[0] = 3;
 	// periods[0] = 675000; //150000*4.5 
 
@@ -339,6 +341,11 @@ int main(int argc, char **argv)
 
 	// //total utilization = 0.9141301079
 
+
+
+
+	//below for FIFO
+
 	priorities[0] = 3;
 	periods[0] = 22500; //150000*4.5 
 
@@ -357,7 +364,32 @@ int main(int argc, char **argv)
 	priorities[5] = 1;
 	periods[5] = 47500; //150000*9.5 
 
-	//total utilization = 0.867159
+	// total utilization = 0.867159
+
+
+	
+
+	// //below for FIFO (task not in the correct prioirty)
+
+	// priorities[3] = 3;
+	// periods[3] = 22500; //150000*4.5 
+
+	// priorities[0] = 3;
+	// periods[0] = 27500; //150000*5.5
+
+	// priorities[2] = 2;
+	// periods[2] = 32500; //150000*6.5 
+
+	// priorities[1] = 2;
+	// periods[1] = 37500; //150000*7.5 
+
+	// priorities[4] = 1;
+	// periods[4] = 42500; //150000*8.5 
+
+	// priorities[5] = 1;
+	// periods[5] = 47500; //150000*9.5 
+
+	// //total utilization = 0.867159
 
 	struct timespec wakeup_time;
   	clock_gettime(CLOCK_REALTIME, &wakeup_time);
@@ -447,6 +479,31 @@ int main(int argc, char **argv)
 	for(int i=0; i<NUM_THREADS; i++) {
 		pthread_join(thread_id[i], NULL);
 	}
+
+	// below is the code for reversing the creation of threads
+
+	// for(int i=NUM_THREADS-1; i>=0; i--)
+	// {
+	// 	lvargs[i].thread_number = i;
+	// 	lvargs[i].thread_policy = policies[i];
+	// 	lvargs[i].thread_affinity = affinities[i];
+	// 	lvargs[i].thread_period = periods[i];
+	// 	lvargs[i].thread_priority = priorities[i];
+	// 	lvargs[i].wake_time = wakeup_time;
+
+	// 	if(pthread_create(&thread_id[i], &attributes[i], Thread, (void*)&lvargs[i]) != 0)
+	// 	{
+	// 		printf("%d - %s %d\n", __LINE__, "Error Spawning Thread:", i);
+	// 	}
+	// 	else
+	// 	{
+	// 		trace_write("RTS_Spawned Thread_%d\n", i);
+	// 	}	
+	// }
+
+	// for(int i=NUM_THREADS-1; i>=0; i--) {
+	// 	pthread_join(thread_id[i], NULL);
+	// }
 
 	qsort(results, NUM_THREADS, sizeof(struct thread_args), comparator);
 	
