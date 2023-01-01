@@ -60,7 +60,7 @@ struct thread_args {
 	long long thread_deadline;
 	long long thread_response_time;
 
-	struct timespec wake_time;
+	struct timespec wake_time; // added to calculate the release time of each thread
 };
 
 static struct thread_args results[NUM_THREADS];
@@ -261,8 +261,8 @@ static void* Thread(void *inArgs)
 		clock_gettime(CLOCK_REALTIME, &results[tid].thread_end_time);
 
 		/* Following sequence of commented instructions should be filled at the end of each periodic iteration*/
-		results[tid].thread_deadline 		= results[tid].thread_start_time.tv_sec * 1000000000 + results[tid].thread_start_time.tv_nsec + args->thread_period * 1000;
-		results[tid].thread_response_time 	= clock_diff(results[tid].thread_start_time, results[tid].thread_end_time);
+		results[tid].thread_deadline 		= args->wake_time.tv_sec * 1000000000 + args->wake_time.tv_nsec + args->thread_period * 1000;
+		results[tid].thread_response_time 	= clock_diff(args->wake_time, results[tid].thread_end_time);
 
 		/* Do not change the below sequence of instructions.*/
 		results[tid].thread_number 			= args->thread_number;
@@ -271,6 +271,7 @@ static void* Thread(void *inArgs)
 		results[tid].thread_priority 		= args->thread_priority;
 		results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
 
+		// incrementing first is necessary, because you want to compare it with the next release time
 		timespec_add_us(&args->wake_time, (args->thread_period));
 
 		miss_deadline_time = timespec_cmp(&results[tid].thread_end_time, &args->wake_time);
