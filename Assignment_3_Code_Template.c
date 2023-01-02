@@ -370,25 +370,25 @@ int main(int argc, char **argv)
 
 	
 
-	// //below for FIFO (task not in the correct prioirty)
+	//below for FIFO (task not in the correct prioirty)
 
-	// priorities[3] = 3;
-	// periods[3] = 22500; //150000*4.5 
+	// priorities[1] = 3;
+	// periods[1] = 22500; //150000*4.5 
 
 	// priorities[0] = 3;
 	// periods[0] = 27500; //150000*5.5
 
+	// priorities[3] = 2;
+	// periods[3] = 32500; //150000*6.5 
+
 	// priorities[2] = 2;
-	// periods[2] = 32500; //150000*6.5 
-
-	// priorities[1] = 2;
-	// periods[1] = 37500; //150000*7.5 
-
-	// priorities[4] = 1;
-	// periods[4] = 42500; //150000*8.5 
+	// periods[2] = 37500; //150000*7.5 
 
 	// priorities[5] = 1;
-	// periods[5] = 47500; //150000*9.5 
+	// periods[5] = 42500; //150000*8.5 
+
+	// priorities[4] = 1;
+	// periods[4] = 47500; //150000*9.5  
 
 	// //total utilization = 0.867159
 
