@@ -287,6 +287,10 @@ static void* Thread(void *inArgs)
 
 		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld Miss: %d Miss time: %lld\n", tid, results[tid].thread_response_time, results[tid].thread_deadline, miss_flag, miss_deadline_time);
 
+		if (miss_flag == 1) {
+			break;
+		}
+
 		tasks_count++;
 	}
 
@@ -370,7 +374,7 @@ int main(int argc, char **argv)
 	// priorities[5] = 1;
 	// periods[5] = 47500; //150000*9.5 
 
-	// // total utilization = 0.867159
+	// // total utilization = 0.9141301079
 
 
 	
