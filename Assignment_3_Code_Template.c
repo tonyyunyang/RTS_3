@@ -244,12 +244,15 @@ static void* Thread(void *inArgs)
 	
 	int tid = args->thread_number; /* tid is just the number of the executing thread; Note that, 
 	pthread_t specified thread id is no the same as this thread id as this depicts only the sequence number of this thread.*/
-	
+
 	while (tasks_count < PERIOD) {
+
 		// struct timespec tp;
 		// int ret;
-		// ret = sched_rr_get_interval(0, &tp);
-		// printf("Current Round-robin time interval: %ld.%09ld seconds\n", tp.tv_sec, tp.tv_nsec);
+		// pid_t pid;
+		// pid = getpid();
+		// ret = sched_rr_get_interval(pid, &tp);
+		// printf("Current pid: %d Round-robin time interval: %ld.%09ld seconds\n", pid, tp.tv_sec, tp.tv_nsec);
 
 		miss_flag = 0;
 		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->wake_time, NULL);
