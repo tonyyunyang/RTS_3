@@ -37,8 +37,8 @@
 #define POL_TO_STR(x) \
        x==SCHED_FIFO?"FIFO":x==SCHED_RR?"RR":x==SCHED_OTHER?"OTHER":"INVALID"
 
-// #define DEFAULT_BUSY_WAIT_TIME 5000 // 5 Milliseconds
-#define DEFAULT_BUSY_WAIT_TIME 150000 // default: 5 Milliseconds
+#define DEFAULT_BUSY_WAIT_TIME 5000 // 5 Milliseconds
+// #define DEFAULT_BUSY_WAIT_TIME 150000 // default: 5 Milliseconds
 #define DEFAULT_RR_LOOP_TIME 1000 // 1 Millisecond
 #define MICRO_SECOND_MULTIPLIER 1000000
 
@@ -287,9 +287,9 @@ static void* Thread(void *inArgs)
 
 		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld Miss: %d Miss time: %lld\n", tid, results[tid].thread_response_time, results[tid].thread_deadline, miss_flag, miss_deadline_time);
 
-		if (miss_flag == 1) {
-			break;
-		}
+		// if (miss_flag == 1) {
+		// 	break;
+		// }
 
 		tasks_count++;
 	}
@@ -331,50 +331,50 @@ int main(int argc, char **argv)
 
 	// below for RR
 
-	priorities[0] = 3;
-	periods[0] = 675000; //150000*4.5 
+	// priorities[0] = 3;
+	// periods[0] = 675000; //150000*4.5 
 
-	priorities[1] = 3;
-	periods[1] = 825000; //150000*5.5
+	// priorities[1] = 3;
+	// periods[1] = 825000; //150000*5.5
 
-	priorities[2] = 2;
-	periods[2] = 975000; //150000*6.5 
+	// priorities[2] = 2;
+	// periods[2] = 975000; //150000*6.5 
 
-	priorities[3] = 2;
-	periods[3] = 1125000; //150000*7.5 
+	// priorities[3] = 2;
+	// periods[3] = 1125000; //150000*7.5 
 
-	priorities[4] = 1;
-	periods[4] = 1275000; //150000*8.5 
+	// priorities[4] = 1;
+	// periods[4] = 1275000; //150000*8.5 
 
-	priorities[5] = 1;
-	periods[5] = 1425000; //150000*9.5 
+	// priorities[5] = 1;
+	// periods[5] = 1425000; //150000*9.5 
 
-	//total utilization = 0.9141301079
+	// //total utilization = 0.9141301079
 
 
 
 
 	//below for FIFO
 
-	// priorities[0] = 3;
-	// periods[0] = 22500; //150000*4.5 
+	priorities[0] = 3;
+	periods[0] = 22500; //150000*4.5 
 
-	// priorities[1] = 3;
-	// periods[1] = 27500; //150000*5.5
+	priorities[1] = 3;
+	periods[1] = 27500; //150000*5.5
 
-	// priorities[2] = 2;
-	// periods[2] = 32500; //150000*6.5 
+	priorities[2] = 2;
+	periods[2] = 32500; //150000*6.5 
 
-	// priorities[3] = 2;
-	// periods[3] = 37500; //150000*7.5 
+	priorities[3] = 2;
+	periods[3] = 37500; //150000*7.5 
 
-	// priorities[4] = 1;
-	// periods[4] = 42500; //150000*8.5 
+	priorities[4] = 1;
+	periods[4] = 42500; //150000*8.5 
 
-	// priorities[5] = 1;
-	// periods[5] = 47500; //150000*9.5 
+	priorities[5] = 1;
+	periods[5] = 47500; //150000*9.5 
 
-	// // total utilization = 0.9141301079
+	// total utilization = 0.9141301079
 
 
 	
