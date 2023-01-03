@@ -45,6 +45,10 @@
 // Global data and structures
 static int trace_fd = -1;
 static int inputpolicy = 0;
+long long* responseTimeArray;
+long long* deadlineArray;
+int position_count = 0;
+
 
 
 struct thread_args {
@@ -295,6 +299,10 @@ static void* Thread(void *inArgs)
 		// }
 
 		tasks_count++;
+
+		responseTimeArray[position_count] = results[tid].thread_response_time;
+		deadlineArray[position_count] = results[tid].thread_deadline;
+		position_count++;
 	}
 
 	/* <==================== ADD CODE ABOVE =======================>*/
@@ -319,6 +327,8 @@ static int comparator(const void* p, const void* q)
 
 int main(int argc, char **argv)
 {
+	responseTimeArray = (long long*) malloc(50 * sizeof(long long));
+	deadlineArray = (long long*) malloc(50 * sizeof(long long));
 	/*<======== You have to change the following three data structures whose values will be assigned to threads in sequence =========>*/    
 	/* NOTE: Do not forget to change the value of macro NUM_THREADS when you want to change the number of threads, 
 	 * and then fill the following arrays accordingly. Default value of NUM_THREADS is 4. 
@@ -531,9 +541,80 @@ int main(int argc, char **argv)
 			  );
 	}
 
+	if(strcmp(argv[1], "RR") == 0) {
+
+		FILE* out = fopen("RR-responseTimeArray.txt", "w");
+
+		// Write the contents of the array to the file
+		for (int i = 0; i < 50; i++) {
+			fprintf(out, "%lld\n", responseTimeArray[i]);
+		}
+
+		// Close the file
+		fclose(out);
+
+		FILE* out1 = fopen("RR-deadlineArray.txt", "w");
+
+		// Write the contents of the array to the file
+		for (int i = 0; i < 50; i++) {
+			fprintf(out1, "%lld\n", deadlineArray[i]);
+		}
+
+		// Close the file
+		fclose(out1);
+			
+	} else if(strcmp(argv[1], "FIFO") == 0) {
+
+		FILE* out = fopen("FIFO-responseTimeArray.txt", "w");
+
+		// Write the contents of the array to the file
+		for (int i = 0; i < 50; i++) {
+			fprintf(out, "%lld\n", responseTimeArray[i]);
+		}
+
+		// Close the file
+		fclose(out);
+
+		FILE* out1 = fopen("FIFO-deadlineArray.txt", "w");
+
+		// Write the contents of the array to the file
+		for (int i = 0; i < 50; i++) {
+			fprintf(out1, "%lld\n", deadlineArray[i]);
+		}
+
+		// Close the file
+		fclose(out1);
+		
+	} else if(strcmp(argv[1], "OTHER") == 0) {
+
+		FILE* out = fopen("OTHER-responseTimeArray.txt", "w");
+
+		// Write the contents of the array to the file
+		for (int i = 0; i < 50; i++) {
+			fprintf(out, "%lld\n", responseTimeArray[i]);
+		}
+
+		// Close the file
+		fclose(out);
+
+		FILE* out1 = fopen("OTHER-deadlineArray.txt", "w");
+
+		// Write the contents of the array to the file
+		for (int i = 0; i < 50; i++) {
+			fprintf(out1, "%lld\n", deadlineArray[i]);
+		}
+
+		// Close the file
+		fclose(out1);
+
+	} else {}
+
 	if(close(trace_fd) == 0)
 	{
 		printf("Successfully closed the trace file\n");
 	}
+
+	free(responseTimeArray);
+	free(deadlineArray);
 	return 0;
 }
