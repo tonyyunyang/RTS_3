@@ -294,10 +294,12 @@ static void* Thread(void *inArgs)
 
 		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld Miss: %d Miss time: %lld\n", tid, results[tid].thread_response_time, results[tid].thread_deadline, miss_flag, miss_deadline_time);
 
-		// if (miss_flag == 1) {
+		// if ((args->thread_policy == SCHED_RR) || (args->thread_policy == SCHED_OTHER)){
+		// 	if (miss_flag == 1) {
 		// 	break;
+		// 	}
 		// }
-
+		
 		tasks_count++;
 
 		responseTimeArray[position_count] = results[tid].thread_response_time;
@@ -342,7 +344,7 @@ int main(int argc, char **argv)
 
 	int periods[NUM_THREADS];	// Used in calculation of next period value in a periodic task / thread.
 
-	// below for RR
+	// below for RR (Not anymore)
 
 	// priorities[0] = 3;
 	// periods[0] = 675000; //150000*4.5 
@@ -366,8 +368,7 @@ int main(int argc, char **argv)
 
 
 
-
-	//below for FIFO
+	//below for FIFO and RR
 
 	priorities[0] = 3;
 	periods[0] = 22500; //150000*4.5 
@@ -392,7 +393,7 @@ int main(int argc, char **argv)
 
 	
 
-	//below for FIFO (task not in the correct prioirty)
+	//below for FIFO and RR (task not in the correct prioirty)
 
 	// priorities[1] = 3;
 	// periods[1] = 22500; //150000*4.5 
@@ -413,6 +414,29 @@ int main(int argc, char **argv)
 	// periods[4] = 47500; //150000*9.5  
 
 	// //total utilization = 0.867159
+
+
+	//below for OTHER
+
+	// priorities[0] = 0;
+	// periods[0] = 22500; //150000*4.5 
+
+	// priorities[1] = 0;
+	// periods[1] = 27500; //150000*5.5
+
+	// priorities[2] = 0;
+	// periods[2] = 32500; //150000*6.5 
+
+	// priorities[3] = 0;
+	// periods[3] = 37500; //150000*7.5 
+
+	// priorities[4] = 0;
+	// periods[4] = 42500; //150000*8.5 
+
+	// priorities[5] = 0;
+	// periods[5] = 47500; //150000*9.5 
+
+	// // total utilization = 0.9141301079
 
 	struct timespec wakeup_time;
   	clock_gettime(CLOCK_REALTIME, &wakeup_time);
