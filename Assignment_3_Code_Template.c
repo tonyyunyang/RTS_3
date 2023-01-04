@@ -302,6 +302,7 @@ static void* Thread(void *inArgs)
 		
 		tasks_count++;
 
+		// fill the global array for dumping into file
 		responseTimeArray[position_count] = results[tid].thread_response_time;
 		deadlineArray[position_count] = results[tid].thread_deadline;
 		position_count++;
@@ -370,25 +371,25 @@ int main(int argc, char **argv)
 
 	//below for FIFO and RR
 
-	priorities[0] = 3;
-	periods[0] = 22500; //150000*4.5 
+	// priorities[0] = 3;
+	// periods[0] = 22500; //150000*4.5 
 
-	priorities[1] = 3;
-	periods[1] = 27500; //150000*5.5
+	// priorities[1] = 3;
+	// periods[1] = 27500; //150000*5.5
 
-	priorities[2] = 2;
-	periods[2] = 32500; //150000*6.5 
+	// priorities[2] = 2;
+	// periods[2] = 32500; //150000*6.5 
 
-	priorities[3] = 2;
-	periods[3] = 37500; //150000*7.5 
+	// priorities[3] = 2;
+	// periods[3] = 37500; //150000*7.5 
 
-	priorities[4] = 1;
-	periods[4] = 42500; //150000*8.5 
+	// priorities[4] = 1;
+	// periods[4] = 42500; //150000*8.5 
 
-	priorities[5] = 1;
-	periods[5] = 47500; //150000*9.5 
+	// priorities[5] = 1;
+	// periods[5] = 47500; //150000*9.5 
 
-	// total utilization = 0.9141301079
+	// // total utilization = 0.9141301079
 
 
 	
@@ -418,25 +419,25 @@ int main(int argc, char **argv)
 
 	//below for OTHER
 
-	// priorities[0] = 0;
-	// periods[0] = 22500; //150000*4.5 
+	priorities[0] = 0;
+	periods[0] = 22500; //150000*4.5 
 
-	// priorities[1] = 0;
-	// periods[1] = 27500; //150000*5.5
+	priorities[1] = 0;
+	periods[1] = 27500; //150000*5.5
 
-	// priorities[2] = 0;
-	// periods[2] = 32500; //150000*6.5 
+	priorities[2] = 0;
+	periods[2] = 32500; //150000*6.5 
 
-	// priorities[3] = 0;
-	// periods[3] = 37500; //150000*7.5 
+	priorities[3] = 0;
+	periods[3] = 37500; //150000*7.5 
 
-	// priorities[4] = 0;
-	// periods[4] = 42500; //150000*8.5 
+	priorities[4] = 0;
+	periods[4] = 42500; //150000*8.5 
 
-	// priorities[5] = 0;
-	// periods[5] = 47500; //150000*9.5 
+	priorities[5] = 0;
+	periods[5] = 47500; //150000*9.5 
 
-	// // total utilization = 0.9141301079
+	// total utilization = 0.9141301079
 
 	struct timespec wakeup_time;
   	clock_gettime(CLOCK_REALTIME, &wakeup_time);
