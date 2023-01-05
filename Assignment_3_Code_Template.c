@@ -380,19 +380,19 @@ int main(int argc, char **argv)
 
 	//below for FIFO and RR
 
-	priorities[0] = 3;
+	priorities[0] = 6;
 	periods[0] = 22500; //150000*4.5 
 
-	priorities[1] = 3;
+	priorities[1] = 5;
 	periods[1] = 27500; //150000*5.5
 
-	priorities[2] = 2;
+	priorities[2] = 4;
 	periods[2] = 32500; //150000*6.5 
 
-	priorities[3] = 2;
+	priorities[3] = 3;
 	periods[3] = 37500; //150000*7.5 
 
-	priorities[4] = 1;
+	priorities[4] = 2;
 	periods[4] = 42500; //150000*8.5 
 
 	priorities[5] = 1;
