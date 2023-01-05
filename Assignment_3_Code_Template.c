@@ -252,20 +252,23 @@ static void* Thread(void *inArgs)
 	int tid = args->thread_number; /* tid is just the number of the executing thread; Note that, 
 	pthread_t specified thread id is no the same as this thread id as this depicts only the sequence number of this thread.*/
 
+	struct timespec interval;
+	timespec_add_us(&interval, args->thread_period);
+
+	clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->wake_time, NULL);
+
 	while (tasks_count < PERIOD) {
 
-		// struct timespec tp;
-		// int ret;
-		// pid_t pid;
-		// pid = getpid();
-		// ret = sched_rr_get_interval(pid, &tp);
-		// printf("Current pid: %d Round-robin time interval: %ld.%09ld seconds\n", pid, tp.tv_sec, tp.tv_nsec);
-
-		miss_flag = 0;
-		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->wake_time, NULL);
-
-		actualReleaseTime[position_count] = args->wake_time.tv_sec*1000000000 + args->wake_time.tv_nsec;
-		expectReleaseTime[position_count] = args->wake_time.tv_sec*1000000000 + args->wake_time.tv_nsec;
+		if (tid == 3){
+			if (tasks_count == 0){
+				actualReleaseTime[position_count] = args->wake_time.tv_sec*1000000000 + args->wake_time.tv_nsec;
+				expectReleaseTime[position_count] = args->wake_time.tv_sec*1000000000 + args->wake_time.tv_nsec;
+			}else {
+				clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
+				actualReleaseTime[position_count] = results[tid].thread_start_time.tv_sec*1000000000 + results[tid].thread_start_time.tv_nsec;
+			}
+			expectReleaseTime[position_count+1] = expectReleaseTime[position_count] + args->thread_period * 1000;
+		}
 
 		trace_write("RTS_Thread_%d Policy:%s Priority:%d Period: %d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
 		args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority, args->thread_period*1000);
@@ -289,29 +292,14 @@ static void* Thread(void *inArgs)
 		results[tid].thread_priority 		= args->thread_priority;
 		results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
 
-		// incrementing first is necessary, because you want to compare it with the next release time
-		timespec_add_us(&args->wake_time, (args->thread_period));
-
-		miss_deadline_time = timespec_cmp(&results[tid].thread_end_time, &args->wake_time);
-
-		if (miss_deadline_time > 0) {
-			miss_flag = 1;
-		}
-
-		trace_write("RTS_Thread_%d Terminated ... ResponseTime:%lld Deadline:%lld Miss: %d Miss time: %lld\n", tid, results[tid].thread_response_time, results[tid].thread_deadline, miss_flag, miss_deadline_time);
-
-		// if ((args->thread_policy == SCHED_RR) || (args->thread_policy == SCHED_OTHER)){
-		// 	if (miss_flag == 1) {
-		// 	break;
-		// 	}
-		// }
-		
+		if (tid != 3) {
+			trace_write("RTS_Thread_%d Terminated", tid);
+		}else {
+			trace_write("RTS_Thread_%d Terminated ... Expected release time: %lld Actual release time: %lld Difference (Actual - Expected): %lld", tid, expectReleaseTime[position_count], actualReleaseTime[position_count], (actualReleaseTime[position_count] - expectReleaseTime[position_count]));
+			position_count++;
+		}	
 		tasks_count++;
-
-		// fill the global array for dumping into file
-		responseTimeArray[position_count] = results[tid].thread_response_time;
-		deadlineArray[position_count] = results[tid].thread_deadline;
-		position_count++;
+		nanosleep(&interval, 0);
 	}
 
 	/* <==================== ADD CODE ABOVE =======================>*/
