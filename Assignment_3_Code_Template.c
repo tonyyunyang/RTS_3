@@ -47,6 +47,9 @@ static int trace_fd = -1;
 static int inputpolicy = 0;
 long long* responseTimeArray;
 long long* deadlineArray;
+long long* expectReleaseTime;
+long long* actualReleaseTime;
+long long* diffReleaseTime;
 int position_count = 0;
 
 
@@ -261,6 +264,9 @@ static void* Thread(void *inArgs)
 		miss_flag = 0;
 		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->wake_time, NULL);
 
+		actualReleaseTime[position_count] = args->wake_time.tv_sec*1000000000 + args->wake_time.tv_nsec;
+		expectReleaseTime[position_count] = args->wake_time.tv_sec*1000000000 + args->wake_time.tv_nsec;
+
 		trace_write("RTS_Thread_%d Policy:%s Priority:%d Period: %d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
 		args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority, args->thread_period*1000);
 
@@ -332,6 +338,9 @@ int main(int argc, char **argv)
 {
 	responseTimeArray = (long long*) malloc(50 * sizeof(long long));
 	deadlineArray = (long long*) malloc(50 * sizeof(long long));
+	expectReleaseTime = (long long*) malloc(50 * sizeof(long long));
+	actualReleaseTime = (long long*) malloc(50 * sizeof(long long));
+	diffReleaseTime = (long long*) malloc(50 * sizeof(long long));
 	/*<======== You have to change the following three data structures whose values will be assigned to threads in sequence =========>*/    
 	/* NOTE: Do not forget to change the value of macro NUM_THREADS when you want to change the number of threads, 
 	 * and then fill the following arrays accordingly. Default value of NUM_THREADS is 4. 
@@ -634,6 +643,18 @@ int main(int argc, char **argv)
 
 	} else {}
 
+	for (int i = 0; i < 50; i++) {
+		diffReleaseTime[i] = actualReleaseTime[i] - expectReleaseTime[i];
+	}
+	FILE* out = fopen("ReleaseTimeDiff.txt", "w");
+	// Write the contents of the array to the file
+	for (int i = 0; i < 50; i++) {
+		fprintf(out, "%lld\n", diffReleaseTime[i]);
+	}
+	// Close the file
+	fclose(out);
+
+
 	if(close(trace_fd) == 0)
 	{
 		printf("Successfully closed the trace file\n");
@@ -641,5 +662,8 @@ int main(int argc, char **argv)
 
 	free(responseTimeArray);
 	free(deadlineArray);
+	free(expectReleaseTime);
+	free(actualReleaseTime);
+	free(diffReleaseTime);
 	return 0;
 }
