@@ -47,7 +47,7 @@ plt.title(title,fontsize=20)
 plt.grid(axis='y',color='grey',linestyle='--',lw=0.5,alpha=0.5)
 plt.tick_params(axis='both',labelsize=14)
 plot1 = ax1.plot(X_values,Y_values_1,'b',label='Value of response time')
-ax1.set_ylabel('Response Time', fontsize = 18)
+ax1.set_ylabel('Response Time ns', fontsize = 18)
 # ax1.set_ylim(0,240)
 for tl in ax1.get_yticklabels():
     tl.set_color('b')  
