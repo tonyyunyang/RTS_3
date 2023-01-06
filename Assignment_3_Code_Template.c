@@ -254,13 +254,17 @@ static void* Thread(void *inArgs)
 
 	struct timespec interval;
 	timespec_add_us(&interval, args->thread_period);
+	struct timespec next;
+	struct timespec now;
+	struct timespec rem;
 
 	clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &args->wake_time, NULL);
 
 	while (tasks_count < PERIOD) {
+		clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
+		next = results[tid].thread_start_time;
 
 		if (tid == 3){
-			clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
 			if (tasks_count == 0){
 				actualReleaseTime[position_count] = results[tid].thread_start_time.tv_sec*1000000000 + results[tid].thread_start_time.tv_nsec;
 				expectReleaseTime[position_count] = results[tid].thread_start_time.tv_sec*1000000000 + results[tid].thread_start_time.tv_nsec;
@@ -273,7 +277,6 @@ static void* Thread(void *inArgs)
 			trace_write("RTS_Thread_%d Arrived", tid);
 		}
 		
-		clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
 		workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
 		/* In order to change the execution time (busy wait loop) of this thread
 		*  from ~5+/-100us milliseconds to XX milliseconds, you have to change the value of
@@ -299,7 +302,10 @@ static void* Thread(void *inArgs)
 		}
 		
 		tasks_count++;
-		nanosleep(&interval, 0);
+		timespec_add_us(&next, args->thread_period);
+		clock_gettime(CLOCK_REALTIME, &now);
+		rem.tv_nsec = clock_diff(now, next);
+		nanosleep(&rem, 0);
 	}
 
 	/* <==================== ADD CODE ABOVE =======================>*/
