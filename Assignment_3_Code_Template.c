@@ -260,19 +260,19 @@ static void* Thread(void *inArgs)
 	while (tasks_count < PERIOD) {
 
 		if (tid == 3){
+			clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
 			if (tasks_count == 0){
-				actualReleaseTime[position_count] = args->wake_time.tv_sec*1000000000 + args->wake_time.tv_nsec;
-				expectReleaseTime[position_count] = args->wake_time.tv_sec*1000000000 + args->wake_time.tv_nsec;
+				actualReleaseTime[position_count] = results[tid].thread_start_time.tv_sec*1000000000 + results[tid].thread_start_time.tv_nsec;
+				expectReleaseTime[position_count] = results[tid].thread_start_time.tv_sec*1000000000 + results[tid].thread_start_time.tv_nsec;
 			}else {
-				clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
 				actualReleaseTime[position_count] = results[tid].thread_start_time.tv_sec*1000000000 + results[tid].thread_start_time.tv_nsec;
 			}
 			expectReleaseTime[position_count+1] = expectReleaseTime[position_count] + args->thread_period * 1000;
+			trace_write("RTS_Thread_%d Arrived ... Expected release time: %lld Actual release time: %lld Difference (Actual - Expected): %lld", tid, expectReleaseTime[position_count], actualReleaseTime[position_count], (actualReleaseTime[position_count] - expectReleaseTime[position_count]));
+		}else {
+			trace_write("RTS_Thread_%d Arrived", tid);
 		}
-
-		trace_write("RTS_Thread_%d Policy:%s Priority:%d Period: %d\n", /*This is an example trace message which appears at the start of the thread in KernelShark */
-		args->thread_number, POL_TO_STR(args->thread_policy), args->thread_priority, args->thread_period*1000);
-
+		
 		clock_gettime(CLOCK_REALTIME, &results[tid].thread_start_time); // This fetches the timespec structure through which can get current time.
 		workload(args->thread_number); // This produces a busy wait loop of ~5+/-100us milliseconds
 		/* In order to change the execution time (busy wait loop) of this thread
@@ -292,12 +292,12 @@ static void* Thread(void *inArgs)
 		results[tid].thread_priority 		= args->thread_priority;
 		results[tid].thread_end_timestamp 	= getTimeStampMicroSeconds();
 
-		if (tid != 3) {
-			trace_write("RTS_Thread_%d Terminated", tid);
-		}else {
-			trace_write("RTS_Thread_%d Terminated ... Expected release time: %lld Actual release time: %lld Difference (Actual - Expected): %lld", tid, expectReleaseTime[position_count], actualReleaseTime[position_count], (actualReleaseTime[position_count] - expectReleaseTime[position_count]));
+		trace_write("RTS_Thread_%d Terminated", tid);
+
+		if (tid == 3) {
 			position_count++;
-		}	
+		}
+		
 		tasks_count++;
 		nanosleep(&interval, 0);
 	}
